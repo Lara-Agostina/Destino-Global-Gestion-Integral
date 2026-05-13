@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Destinos Global | Gestión Integral</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root { --primary: #0f172a; --accent: #2563eb; --bg: #f8fafc; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: var(--bg); color: var(--primary); overflow-x: hidden; }
+        
+        .glass-auth {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .auth-screen {
+            background: linear-gradient(rgba(15, 23, 42, 0.6), rgba(15, 23, 42, 0.8)), 
+                        url('https://images.unsplash.com/photo-1500835595353-b0ad2e58b8df?auto=format&fit=crop&q=80&w=2000');
+            background-size: cover;
+            background-position: center;
+        }
+
+        .hidden { display: none !important; }
+
+        .page-section {
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .sidebar-link.active { background-color: #eff6ff; color: #2563eb; font-weight: 700; border-right: 4px solid #2563eb; }
+        
+        .loader {
+            border: 2px solid #f3f3f3; border-top: 2px solid #3b82f6;
+            border-radius: 50%; width: 18px; height: 18px;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        .dest-card:hover img { transform: scale(1.05); }
+    </style>
+</head>
+<body class="min-h-screen">
+
+    <!-- PANTALLA DE AUTENTICACIÓN -->
+    <section id="auth-section" class="auth-screen fixed inset-0 z-[100] flex items-center justify-center p-4">
+        <div class="glass-auth w-full max-w-md p-10 rounded-[3rem] shadow-2xl">
+            <div class="text-center mb-10">
+                <div class="bg-blue-600 w-20 h-20 rounded-3xl flex items-center justify-center text-white text-3xl mx-auto mb-6 shadow-xl rotate-3">
+                    <i class="fa-solid fa-plane-departure"></i>
+                </div>
+                <h2 id="auth-title" class="text-4xl font-extrabold text-slate-900 tracking-tighter">Explora el Mundo</h2>
+                <p id="auth-subtitle" class="text-slate-500 mt-3 font-medium">Inicia sesión para gestionar tus rutas.</p>
+            </div>
+
+            <form id="auth-form" class="space-y-5">
+                <div id="name-field" class="hidden">
+                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1">Nombre de Gestor</label>
+                    <input type="text" id="auth-name" placeholder="Ej: Juan Pérez" class="w-full px-6 py-4 rounded-2xl border border-slate-200 outline-none focus:ring-4 focus:ring-blue-500/10 transition-all bg-white/50">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1">Correo Electrónico</label>
+                    <input type="email" id="auth-email" required placeholder="tu@email.com" class="w-full px-6 py-4 rounded-2xl border border-slate-200 outline-none focus:ring-4 focus:ring-blue-500/10 transition-all bg-white/50">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1">Contraseña</label>
+                    <input type="password" id="auth-pass" required placeholder="••••••••" class="w-full px-6 py-4 rounded-2xl border border-slate-200 outline-none focus:ring-4 focus:ring-blue-500/10 transition-all bg-white/50">
+                </div>
+                
+                <button type="submit" id="btn-auth-submit" class="w-full bg-blue-600 text-white py-5 rounded-2xl font-bold text-lg hover:bg-blue-700 transition-all shadow-xl shadow-blue-600/20 flex items-center justify-center gap-3 mt-4">
+                    <span id="btn-text">Entrar</span>
+                    <div id="auth-loader" class="loader hidden"></div>
+                </button>
+            </form>
+
+            <div id="auth-msg" class="mt-6 p-4 rounded-2xl bg-red-50 text-red-600 text-xs font-bold text-center hidden border border-red-100"></div>
+
+            <div class="mt-10 text-center border-t border-slate-100 pt-8">
+                <p class="text-slate-500 font-medium">
+                    <span id="toggle-text">¿No tienes cuenta?</span> 
+                    <button id="btn-toggle-auth" type="button" class="text-blue-600 font-bold hover:underline ml-1">Crea una aquí</button>
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- CONTENEDOR PRINCIPAL DE LA APP -->
+    <div id="app-container" class="hidden flex min-h-screen">
+        
+        <!-- BARRA LATERAL -->
+        <aside class="w-72 fixed h-full bg-white border-r border-slate-200 hidden lg:flex flex-col p-8 z-50">
+            <div class="flex items-center gap-4 mb-14">
+                <div class="bg-blue-600 p-3 rounded-2xl text-white shadow-lg shadow-blue-200">
+                    <i class="fa-solid fa-earth-americas text-xl"></i>
+                </div>
+                <span class="text-2xl font-extrabold tracking-tighter">Global<span class="text-blue-600">Travel</span></span>
+            </div>
+
+            <nav class="flex-grow space-y-3">
+                <button onclick="navigateTo('home')" id="nav-home" class="sidebar-link w-full flex items-center gap-4 p-4 rounded-2xl text-slate-500 hover:bg-slate-50 transition active">
+                    <i class="fa-solid fa-house-chimney"></i> <span class="font-semibold">Inicio</span>
+                </button>
+                <button onclick="navigateTo('explore')" id="nav-explore" class="sidebar-link w-full flex items-center gap-4 p-4 rounded-2xl text-slate-500 hover:bg-slate-50 transition">
+                    <i class="fa-solid fa-compass"></i> <span class="font-semibold">Explorar</span>
+                </button>
+                <button onclick="navigateTo('favorites')" id="nav-favorites" class="sidebar-link w-full flex items-center gap-4 p-4 rounded-2xl text-slate-500 hover:bg-slate-50 transition">
+                    <i class="fa-solid fa-bookmark"></i> <span class="font-semibold">Favoritos</span>
+                </button>
+                <button onclick="navigateTo('profile')" id="nav-profile" class="sidebar-link w-full flex items-center gap-4 p-4 rounded-2xl text-slate-500 hover:bg-slate-50 transition">
+                    <i class="fa-solid fa-user-gear"></i> <span class="font-semibold">Perfil</span>
+                </button>
+            </nav>
+
+            <div class="mt-auto pt-8 border-t border-slate-100">
+                <div class="bg-slate-50 p-5 rounded-3xl mb-6">
+                    <p id="user-name-display" class="text-sm font-bold text-slate-800 truncate">Cargando...</p>
+                    <p class="text-[10px] text-blue-600 font-bold uppercase tracking-widest mt-1">Gestor Activo</p>
+                </div>
+                <button id="btn-logout" class="w-full flex items-center gap-4 p-4 rounded-2xl text-red-500 hover:bg-red-50 transition font-bold">
+                    <i class="fa-solid fa-power-off"></i> Salir
+                </button>
+            </div>
+        </aside>
+
+        <!-- CONTENIDO PRINCIPAL -->
+        <main class="flex-grow lg:ml-72 p-6 md:p-12">
+            <header class="flex justify-between items-center mb-12">
+                <div>
+                    <h2 id="page-title" class="text-4xl font-extrabold text-slate-900 tracking-tighter">Panel Principal</h2>
+                    <p id="page-subtitle" class="text-slate-500 font-medium mt-2">Bienvenido a la Diplomatura de Gestión Turística.</p>
+                </div>
+            </header>
+
+            <!-- VISTA: INICIO -->
+            <section id="page-home" class="page-section">
+                <div class="bg-slate-900 rounded-[3rem] p-16 text-white relative overflow-hidden mb-12 shadow-2xl shadow-slate-200">
+                    <div class="relative z-10 max-w-xl">
+                        <span class="inline-block px-4 py-2 bg-blue-600 rounded-full text-xs font-bold uppercase tracking-widest mb-6">Novedad</span>
+                        <h2 class="text-5xl font-extrabold mb-6 leading-tight">Impulsa el Turismo en el Mercosur</h2>
+                        <p class="text-slate-400 text-lg mb-10 leading-relaxed">Herramientas avanzadas para la gestión de destinos en Argentina, Brasil y Paraguay.</p>
+                        <button onclick="navigateTo('explore')" class="bg-white text-slate-900 px-10 py-5 rounded-2xl font-bold hover:bg-blue-50 transition-all shadow-xl">Comenzar Gestión</button>
+                    </div>
+                    <div class="absolute right-[-10%] top-0 w-3/4 h-full opacity-20">
+                        <i class="fa-solid fa-map-marked-alt text-[20rem] text-white"></i>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VISTA: EXPLORAR -->
+            <section id="page-explore" class="page-section hidden">
+                <div class="flex flex-col md:flex-row gap-6 mb-12">
+                    <div class="relative flex-grow">
+                        <i class="fa-solid fa-search absolute left-6 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                        <input type="text" id="search-input" placeholder="Buscar por ciudad o país..." class="w-full pl-16 pr-6 py-5 bg-white rounded-3xl border border-slate-200 shadow-sm outline-none focus:ring-4 focus:ring-blue-500/5 transition-all">
+                    </div>
+                    <select id="category-filter" class="bg-white px-8 py-5 rounded-3xl border border-slate-200 font-bold text-slate-600 outline-none">
+                        <option value="all">Categorías</option>
+                        <option value="Naturaleza">Naturaleza</option>
+                        <option value="Cultura">Cultura</option>
+                        <option value="Historia">Historia</option>
+                    </select>
+                </div>
+                <div id="destinations-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-10"></div>
+            </section>
+
+            <!-- VISTA: FAVORITOS -->
+            <section id="page-favorites" class="page-section hidden">
+                <div id="favorites-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-10"></div>
+                <div id="empty-favs" class="hidden text-center py-32 bg-white rounded-[4rem] border border-dashed border-slate-200">
+                    <div class="bg-slate-50 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <i class="fa-solid fa-heart-circle-xmark text-4xl text-slate-300"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold text-slate-800 mb-2">No hay rutas guardadas</h3>
+                    <p class="text-slate-400 font-medium">Explora destinos y guarda tus preferidos aquí.</p>
+                </div>
+            </section>
+
+            <!-- VISTA: MI PERFIL -->
+            <section id="page-profile" class="page-section hidden">
+                <div class="max-w-3xl bg-white rounded-[3.5rem] p-10 md:p-16 border border-slate-100 shadow-sm">
+                    <div class="flex flex-col md:flex-row items-center gap-10 mb-12 pb-12 border-b border-slate-50">
+                        <div class="w-32 h-32 bg-blue-600 rounded-[2.5rem] flex items-center justify-center text-white text-5xl shadow-2xl shadow-blue-200 rotate-6">
+                            <i class="fa-solid fa-user-circle"></i>
+                        </div>
+                        <div class="text-center md:text-left">
+                            <h3 class="text-3xl font-extrabold text-slate-900 tracking-tighter" id="profile-display-name">Gestor Turístico</h3>
+                            <p class="text-slate-500 font-medium mt-1" id="profile-display-email">cargando...</p>
+                            <div class="flex gap-2 mt-4 justify-center md:justify-start">
+                                <span class="px-4 py-1.5 bg-blue-50 text-blue-600 text-[10px] font-bold uppercase rounded-xl tracking-widest">Diplomado</span>
+                                <span class="px-4 py-1.5 bg-green-50 text-green-600 text-[10px] font-bold uppercase rounded-xl tracking-widest">Verificado</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <form id="profile-form" class="space-y-8">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 ml-1">Nombre Público</label>
+                                <input type="text" id="edit-profile-name" class="w-full px-6 py-5 rounded-2xl border border-slate-200 outline-none focus:ring-4 focus:ring-blue-500/10 transition-all">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 ml-1">Email de Acceso</label>
+                                <input type="text" id="edit-profile-email" disabled class="w-full px-6 py-5 rounded-2xl border border-slate-100 bg-slate-50 text-slate-400 outline-none cursor-not-allowed">
+                            </div>
+                        </div>
+
+                        <div class="p-8 bg-slate-50 rounded-[2.5rem] border border-slate-100">
+                            <h4 class="font-extrabold text-slate-800 mb-4 text-sm">Metadatos de Gestión</h4>
+                            <div class="flex justify-between text-xs text-slate-500">
+                                <span>Miembro desde</span>
+                                <span id="profile-created-at" class="font-bold text-slate-700">--/--/----</span>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="w-full md:w-auto px-12 bg-slate-900 text-white py-5 rounded-2xl font-bold hover:bg-slate-800 transition-all shadow-xl shadow-slate-200 flex items-center justify-center gap-3">
+                            <span>Actualizar Mi Perfil</span>
+                            <div id="profile-loader" class="loader hidden"></div>
+                        </button>
+                    </form>
+                    <div id="profile-success-msg" class="mt-6 p-5 rounded-2xl bg-green-50 text-green-600 text-sm font-bold text-center hidden border border-green-100 animate-bounce">
+                        <i class="fa-solid fa-check-circle mr-2"></i> ¡Datos actualizados en la nube!
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, updateDoc, deleteDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Inicialización de Firebase
+        const firebaseConfig = JSON.parse(__firebase_config);
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const appId = 'destinos-global-pro';
+
+        // Base de Datos Estática de Destinos (Para simular inventario)
+        const DESTINOS = [
+            { id: 'arg-1', pais: "Argentina", nombre: "Cuesta del Portezuelo", categoria: "Naturaleza", desc: "El mirador más icónico de Catamarca.", img: "https://images.unsplash.com/photo-1580541631971-a0b4e2098679?auto=format&fit=crop&q=80&w=800" },
+            { id: 'arg-2', pais: "Argentina", nombre: "Cataratas del Iguazú", categoria: "Naturaleza", desc: "Maravilla natural compartida con Brasil.", img: "https://images.unsplash.com/photo-1548960917-23c869ec7f7e?auto=format&fit=crop&q=80&w=800" },
+            { id: 'py-1', pais: "Paraguay", nombre: "Misiones Jesuíticas", categoria: "Historia", desc: "Patrimonio de la Humanidad en Itapúa.", img: "https://images.unsplash.com/photo-1589909202802-8f4aadce1849?auto=format&fit=crop&q=80&w=800" },
+            { id: 'br-1', pais: "Brasil", nombre: "Pan de Azúcar", categoria: "Naturaleza", desc: "Las mejores vistas de Río de Janeiro.", img: "https://images.unsplash.com/photo-1483729558449-99ef09a8c325?auto=format&fit=crop&q=80&w=800" },
+            { id: 'br-2', pais: "Brasil", nombre: "Pelourinho", categoria: "Cultura", desc: "Corazón histórico de Salvador de Bahía.", img: "https://images.unsplash.com/photo-1599395213190-28f0907f152d?auto=format&fit=crop&q=80&w=800" },
+            { id: 'py-2', pais: "Paraguay", nombre: "Panteón de los Héroes", categoria: "Historia", desc: "Arquitectura neoclásica en Asunción.", img: "https://images.unsplash.com/photo-1595180470656-787114620f4c?auto=format&fit=crop&q=80&w=800" }
+        ];
+
+        let favoriteIds = new Set();
+        let isLoginMode = true;
+
+        // --- OBSERVAR ESTADO DE AUTENTICACIÓN ---
+        onAuthStateChanged(auth, async (user) => {
+            const authSection = document.getElementById('auth-section');
+            const appContainer = document.getElementById('app-container');
+
+            if (user) {
+                authSection.classList.add('hidden');
+                appContainer.classList.remove('hidden');
+                
+                // Cargar perfil del usuario desde Firestore
+                const profileRef = doc(db, 'artifacts', appId, 'users', user.uid, 'profile', 'info');
+                const userDoc = await getDoc(profileRef);
+                
+                const displayName = userDoc.exists() ? userDoc.data().name : (user.displayName || "Explorador");
+                
+                // Actualizar UI
+                document.getElementById('user-name-display').textContent = displayName;
+                document.getElementById('profile-display-name').textContent = displayName;
+                document.getElementById('profile-display-email').textContent = user.email;
+                document.getElementById('edit-profile-name').value = displayName;
+                document.getElementById('edit-profile-email').value = user.email;
+                
+                if (userDoc.exists()) {
+                    const date = new Date(userDoc.data().createdAt).toLocaleDateString('es-AR');
+                    document.getElementById('profile-created-at').textContent = date;
+                }
+
+                // Sincronizar Favoritos en tiempo real
+                syncFavorites(user.uid);
+                window.navigateTo('home');
+            } else {
+                authSection.classList.remove('hidden');
+                appContainer.classList.add('hidden');
+            }
+        });
+
+        // --- NAVEGACIÓN ---
+        window.navigateTo = (pageId) => {
+            document.querySelectorAll('.page-section').forEach(p => p.classList.add('hidden'));
+            document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
+            
+            document.getElementById(`page-${pageId}`)?.classList.remove('hidden');
+            document.getElementById(`nav-${pageId}`)?.classList.add('active');
+
+            if (pageId === 'explore') renderExplore();
+            if (pageId === 'favorites') renderFavorites();
+            
+            const titles = { 'home': 'Panel Principal', 'explore': 'Explorar Destinos', 'favorites': 'Mis Rutas Guardadas', 'profile': 'Mi Perfil de Gestor' };
+            document.getElementById('page-title').textContent = titles[pageId] || 'Panel';
+        };
+
+        // --- GESTIÓN DE FAVORITOS (BACKEND FIRESTORE) ---
+        window.toggleFavorite = async (destId) => {
+            if (!auth.currentUser) return;
+            const docRef = doc(db, 'artifacts', appId, 'users', auth.currentUser.uid, 'favorites', destId);
+            
+            if (favoriteIds.has(destId)) {
+                await deleteDoc(docRef);
+            } else {
+                const data = DESTINOS.find(d => d.id === destId);
+                await setDoc(docRef, { ...data, savedAt: Date.now() });
+            }
+        };
+
+        function syncFavorites(userId) {
+            const favsRef = collection(db, 'artifacts', appId, 'users', userId, 'favorites');
+            onSnapshot(favsRef, (snap) => {
+                favoriteIds = new Set();
+                snap.forEach(doc => favoriteIds.add(doc.id));
+                
+                // Actualizar vistas si están activas
+                if (!document.getElementById('page-explore').classList.contains('hidden')) renderExplore();
+                if (!document.getElementById('page-favorites').classList.contains('hidden')) renderFavorites();
+            }, (error) => console.error("Error sincronizando:", error));
+        }
+
+        // --- RENDERIZADO DE TARJETAS ---
+        function renderExplore() {
+            const grid = document.getElementById('destinations-grid');
+            const search = document.getElementById('search-input').value.toLowerCase();
+            const cat = document.getElementById('category-filter').value;
+            
+            const filtered = DESTINOS.filter(d => 
+                (d.nombre.toLowerCase().includes(search) || d.pais.toLowerCase().includes(search)) &&
+                (cat === 'all' || d.categoria === cat)
+            );
+            grid.innerHTML = filtered.map(d => createCard(d)).join('');
+        }
+
+        function renderFavorites() {
+            const grid = document.getElementById('favorites-grid');
+            const empty = document.getElementById('empty-favs');
+            const favs = DESTINOS.filter(d => favoriteIds.has(d.id));
+            
+            if (favs.length === 0) { 
+                grid.innerHTML = ''; 
+                empty.classList.remove('hidden'); 
+            } else { 
+                empty.classList.add('hidden'); 
+                grid.innerHTML = favs.map(d => createCard(d)).join(''); 
+            }
+        }
+
+        function createCard(d) {
+            const isFav = favoriteIds.has(d.id);
+            return `
+                <div class="dest-card bg-white rounded-[2.5rem] overflow-hidden border border-slate-100 shadow-sm hover:shadow-2xl transition-all group">
+                    <div class="relative h-64 overflow-hidden">
+                        <img src="${d.img}" class="w-full h-full object-cover transition-transform duration-700">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                        <button onclick="toggleFavorite('${d.id}')" class="absolute top-6 right-6 w-14 h-14 rounded-3xl flex items-center justify-center ${isFav ? 'bg-red-500 text-white' : 'bg-white/90 text-slate-400'} transition-all shadow-lg hover:scale-110 active:scale-95">
+                            <i class="${isFav ? 'fa-solid' : 'fa-regular'} fa-heart text-xl"></i>
+                        </button>
+                        <span class="absolute bottom-6 left-6 px-4 py-2 bg-white/20 backdrop-blur-md rounded-xl text-white text-[10px] font-bold uppercase tracking-widest border border-white/30">${d.pais}</span>
+                    </div>
+                    <div class="p-8">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-xl font-extrabold text-slate-800 tracking-tight">${d.nombre}</h3>
+                            <span class="text-[10px] text-blue-600 font-extrabold uppercase bg-blue-50 px-3 py-1 rounded-lg">${d.categoria}</span>
+                        </div>
+                        <p class="text-slate-500 text-sm leading-relaxed">${d.desc}</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        // --- MANEJO DE AUTENTICACIÓN (LOGIN/REGISTRO) ---
+        window.toggleAuthMode = () => {
+            isLoginMode = !isLoginMode;
+            document.getElementById('name-field').classList.toggle('hidden', isLoginMode);
+            document.getElementById('auth-title').textContent = isLoginMode ? 'Explora el Mundo' : 'Únete a la Red';
+            document.getElementById('auth-subtitle').textContent = isLoginMode ? 'Inicia sesión para gestionar tus rutas.' : 'Crea tu perfil de gestor turístico.';
+            document.getElementById('btn-text').textContent = isLoginMode ? 'Entrar' : 'Empezar ahora';
+            document.getElementById('btn-toggle-auth').textContent = isLoginMode ? 'Crea una aquí' : 'Inicia Sesión';
+        };
+
+        const handleAuth = async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('auth-email').value;
+            const pass = document.getElementById('auth-pass').value;
+            const name = document.getElementById('auth-name').value;
+            const msg = document.getElementById('auth-msg');
+            const loader = document.getElementById('auth-loader');
+            const btnText = document.getElementById('btn-text');
+
+            msg.classList.add('hidden');
+            loader.classList.remove('hidden');
+            btnText.classList.add('opacity-0');
+
+            try {
+                if (isLoginMode) {
+                    await signInWithEmailAndPassword(auth, email, pass);
+                } else {
+                    if (name.length < 3) throw new Error("Por favor ingresa un nombre válido.");
+                    const cred = await createUserWithEmailAndPassword(auth, email, pass);
+                    
+                    // Crear perfil inicial en Firestore
+                    await setDoc(doc(db, 'artifacts', appId, 'users', cred.user.uid, 'profile', 'info'), {
+                        name: name,
+                        email: email,
+                        createdAt: Date.now()
+                    });
+                    
+                    await updateProfile(cred.user, { displayName: name });
+                }
+            } catch (error) {
+                let errorMsg = "Ocurrió un error inesperado.";
+                if (error.code === 'auth/weak-password') errorMsg = "La contraseña es muy débil (mínimo 6 caracteres).";
+                if (error.code === 'auth/email-already-in-use') errorMsg = "Este correo ya está registrado.";
+                if (error.code === 'auth/invalid-credential') errorMsg = "Correo o contraseña incorrectos.";
+                
+                msg.textContent = errorMsg;
+                msg.classList.remove('hidden');
+            } finally {
+                loader.classList.add('hidden');
+                btnText.classList.remove('opacity-0');
+            }
+        };
+
+        // --- ACTUALIZACIÓN DE PERFIL ---
+        document.getElementById('profile-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!auth.currentUser) return;
+
+            const newName = document.getElementById('edit-profile-name').value;
+            const loader = document.getElementById('profile-loader');
+            const success = document.getElementById('profile-success-msg');
+
+            loader.classList.remove('hidden');
+            success.classList.add('hidden');
+
+            try {
+                // Actualizar en Auth
+                await updateProfile(auth.currentUser, { displayName: newName });
+                
+                // Actualizar en Firestore
+                const profileRef = doc(db, 'artifacts', appId, 'users', auth.currentUser.uid, 'profile', 'info');
+                await updateDoc(profileRef, { name: newName });
+
+                // Refrescar UI local
+                document.getElementById('user-name-display').textContent = newName;
+                document.getElementById('profile-display-name').textContent = newName;
+                
+                success.classList.remove('hidden');
+                setTimeout(() => success.classList.add('hidden'), 3000);
+            } catch (error) {
+                console.error("Error al actualizar:", error);
+            } finally {
+                loader.classList.add('hidden');
+            }
+        });
+
+        // Eventos Globales
+        document.getElementById('auth-form').addEventListener('submit', handleAuth);
+        document.getElementById('btn-logout').addEventListener('click', () => signOut(auth));
+        document.getElementById('btn-toggle-auth').addEventListener('click', window.toggleAuthMode);
+        document.getElementById('search-input').addEventListener('input', renderExplore);
+        document.getElementById('category-filter').addEventListener('change', renderExplore);
+    </script>
+</body>
+</html>
