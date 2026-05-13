@@ -48,8 +48,6 @@
         .dest-card:hover img { transform: scale(1.05); }
     </style>
 </head>
-<body class="min-h-screen">
-
 
     <!-- CONTENEDOR PRINCIPAL DE LA APP -->
     <div id="app-container" class="hidden flex min-h-screen">
@@ -203,6 +201,7 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
         const appId = 'destinos-global-pro';
+
 
         // Base de Datos Estática de Destinos (Para simular inventario)
         const DESTINOS = [
